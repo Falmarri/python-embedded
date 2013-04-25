@@ -24,9 +24,9 @@
 __all__ = 'GraphDatabase',\
           'Direction', 'Evaluation', 'Uniqueness', 'BOTH', 'ANY', 'INCOMING', 'OUTGOING'
           
-__version__ = "${pythonic_version}"
+__version__ = "2.0.0-b1"
 
-from neo4j.core import GraphDatabase, Direction, NotFoundException, BOTH, ANY, INCOMING, OUTGOING
+from neo4j.core import GraphDatabase, Direction, NotFoundException, BOTH, ANY, INCOMING, OUTGOING, _DynamicLabel
 from neo4j.traversal import Traversal, Evaluation, Uniqueness
 from neo4j.index import NodeIndexManager, RelationshipIndexManager
 from neo4j.util import rethrow_current_exception_as
@@ -38,8 +38,8 @@ class Nodes(object):
         self.db = db
         self.indexes = NodeIndexManager(db)
     
-    def __call__(self, **properties):
-        return self.create(**properties)
+    def __call__(self, *labels, **properties):
+        return self.create(*labels, **properties)
         
     def __getitem__(self, items):
         return self.get(items)
@@ -54,12 +54,19 @@ class Nodes(object):
     def __len__(self):
         return sum(1 for _ in self)
         
-    def create(self, **properties):
-        node = self.db.createNode()
+    def create(self, *labels, **properties):
+        if labels:
+            node = self.db.createNode([_DynamicLabel(l) for l in labels])
+        else:
+            node = self.db.createNode()
         for key, val in properties.items():
             node[key] = val
         return node
-        
+    
+    def get_by_label(self, label, key, val):
+        return self.db.findNodesByLabelAndProperty(DynamicLabel(label), key, val).iterator()
+
+
     def get(self, id):
         if not isinstance(id, (int, long)):
             raise TypeError("Only integer and long values allowed as node ids.")

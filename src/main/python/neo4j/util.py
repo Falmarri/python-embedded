@@ -38,7 +38,13 @@ class PythonicIterator(object):
         
     def __iter__(self):
         return self
-        
+    
+    def __enter__(self):
+        pass
+    
+    def __exit__(self, _type, value, tb):
+        self.close()
+
     def next(self):
         return self.__iter.next()
         

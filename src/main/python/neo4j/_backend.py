@@ -32,7 +32,8 @@ NEO4J_JAVA_CLASSES = (
     ('org.neo4j.kernel.impl.util',      ('SingleNodePath',)),
     ('org.neo4j.graphdb',               ('Direction', 'DynamicRelationshipType', 'PropertyContainer',\
                                          'Transaction', 'GraphDatabaseService', 'Node', 'Relationship',\
-                                         'Path', 'NotFoundException',)),
+                                         'Path', 'NotFoundException','DynamicLabel')),
+    ('org.neo4j.graphdb.schema',        ('Schema','IndexDefinition')),
     ('org.neo4j.graphdb.traversal',     ('Evaluation', 'Evaluator',)),
     ('org.neo4j.graphdb.index',         ('Index', 'IndexHits',)),
     ('org.neo4j.helpers.collection',    ('IterableWrapper',)),

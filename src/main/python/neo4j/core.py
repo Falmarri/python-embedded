@@ -53,6 +53,26 @@ INCOMING = Direction.INCOMING
 OUTGOING = Direction.OUTGOING
 
 
+class Schema(extends(Schema)):
+
+
+    def get_indexes(self, label=None):
+        if label:
+            return PythonicIterator(self.getIndexes(DynamicLabel(label)).iterator())
+        else:
+            return PythonicIterator(self.getIndexes().iterator())
+
+    def create_index(self, label, *properties):
+        for p in properties:
+            try:
+                self.indexCreator(DynamicLabel(label)).on(p).create()
+            except Exception as e:
+                pass
+
+
+#class IndexDefinition(extends(IndexDefinition)):
+#    pass
+
 class DirectionalType(object):
     def __init__(self, reltype, direction):
         self.type = reltype
@@ -61,6 +81,17 @@ class DirectionalType(object):
         return "%r.%s" % (self.dir, self.type.name())
 
 
+class _DynamicLabel(extends(DynamicLabel)):
+
+    def __new__(cls, l):
+        return DynamicLabel.label(l)
+
+    def __repr__(self):
+        return self.name()
+    
+    def __str__(self):
+        return self.name()
+
 class NodeProxy(extends(NodeProxy)):
     def __getattr__(self, attr):
         return NodeRelationships(self, rel_type(attr))
@@ -68,7 +99,22 @@ class NodeProxy(extends(NodeProxy)):
     @property
     def relationships(self):
         return NodeRelationships(self, None)
-        
+    
+
+    @property
+    def labels(self):
+        return [_.name() for _ in self.getLabels().iterator()]
+
+    def has_label(self, label):
+        return self.hasLabel(_DynamicLabel(label))
+
+    def remove_label(self, label):
+        self.removeLabel(_DynamicLabel(label))
+
+    def add_label(self, *label):
+        for l in label:
+            self.addLabel(_DynamicLabel(l))
+
     # Backwards compat
     rels = relationships
     
