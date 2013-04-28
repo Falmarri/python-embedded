@@ -58,15 +58,16 @@ class Schema(extends(Schema)):
 
     def get_indexes(self, label=None):
         if label:
-            return PythonicIterator(self.getIndexes(DynamicLabel(label)).iterator())
+            return PythonicIterator(self.getIndexes(_DynamicLabel(label)).iterator())
         else:
             return PythonicIterator(self.getIndexes().iterator())
 
     def create_index(self, label, *properties):
         for p in properties:
             try:
-                self.indexCreator(DynamicLabel(label)).on(p).create()
+                self.indexCreator(_DynamicLabel(label)).on(p).create()
             except Exception as e:
+                print e
                 pass
 
 

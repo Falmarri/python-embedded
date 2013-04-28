@@ -29,7 +29,7 @@ __version__ = "2.0.0-b1"
 from neo4j.core import GraphDatabase, Direction, NotFoundException, BOTH, ANY, INCOMING, OUTGOING, _DynamicLabel
 from neo4j.traversal import Traversal, Evaluation, Uniqueness
 from neo4j.index import NodeIndexManager, RelationshipIndexManager
-from neo4j.util import rethrow_current_exception_as
+from neo4j.util import rethrow_current_exception_as, CountablePythonicIterator
 from neo4j.cypher import CypherEngine
 
 class Nodes(object):
@@ -64,10 +64,9 @@ class Nodes(object):
         return node
     
     def get_by_label(self, label, key, val):
-        return self.db.findNodesByLabelAndProperty(DynamicLabel(label), key, val).iterator()
+        return CountablePythonicIterator(self.db.findNodesByLabelAndProperty(_DynamicLabel(label), key, val).iterator())
 
 
-    def get(self, id):
         if not isinstance(id, (int, long)):
             raise TypeError("Only integer and long values allowed as node ids.")
         try:
