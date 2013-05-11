@@ -21,39 +21,42 @@
 """Python bindings for the embedded Neo4j Graph Database.
 """
 
-__all__ = 'GraphDatabase',\
-          'Direction', 'Evaluation', 'Uniqueness', 'BOTH', 'ANY', 'INCOMING', 'OUTGOING'
-          
+__all__ = 'GraphDatabase', 'Direction', 'Evaluation',\
+          'Uniqueness', 'BOTH', 'ANY', 'INCOMING', 'OUTGOING'
+
 __version__ = "2.0.0-b1"
 
-from neo4j.core import GraphDatabase, Direction, NotFoundException, BOTH, ANY, INCOMING, OUTGOING, _DynamicLabel
+from neo4j.core import GraphDatabase, Direction, NotFoundException, \
+    BOTH, ANY, INCOMING, OUTGOING, _DynamicLabel, GlobalGraphOperations
 from neo4j.traversal import Traversal, Evaluation, Uniqueness
 from neo4j.index import NodeIndexManager, RelationshipIndexManager
-from neo4j.util import rethrow_current_exception_as, CountablePythonicIterator
+from neo4j.util import rethrow_current_exception_as, PythonicIterator
 from neo4j.cypher import CypherEngine
 
+
 class Nodes(object):
-    
+
     def __init__(self, db):
         self.db = db
         self.indexes = NodeIndexManager(db)
-    
+        self.op = GlobalGraphOperations.at(self.db)
+
     def __call__(self, *labels, **properties):
         return self.create(*labels, **properties)
-        
+
     def __getitem__(self, items):
         return self.get(items)
-            
+
     def __delitem__(self, item):
         return self[item].delete()
-        
+
     def __iter__(self):
-        for node in self.db.getAllNodes().iterator():
+        for node in self.op.getAllNodes().iterator():
             yield node
-            
+
     def __len__(self):
         return sum(1 for _ in self)
-        
+
     def create(self, *labels, **properties):
         if labels:
             node = self.db.createNode([_DynamicLabel(l) for l in labels])
@@ -62,53 +65,59 @@ class Nodes(object):
         for key, val in properties.items():
             node[key] = val
         return node
-    
-    def get_by_label(self, label, key, val):
-        return CountablePythonicIterator(self.db.findNodesByLabelAndProperty(_DynamicLabel(label), key, val).iterator())
 
+    def get_by_label(self, label, key=None, val=None):
+        if key is None or val is None:
+            return PythonicIterator(self.op.getAllNodesWithLabel(
+                _DynamicLabel(label)).iterator())
+        return PythonicIterator(self.db.findNodesByLabelAndProperty(
+            _DynamicLabel(label), key, val).iterator())
 
-        if not isinstance(id, (int, long)):
-            raise TypeError("Only integer and long values allowed as node ids.")
+    def get(self, _id):
+        if not isinstance(_id, (int, long)):
+            raise TypeError("Only integer and long \
+                    values allowed as node ids.")
         try:
-            return self.db.getNodeById( id )
+            return self.db.getNodeById(_id)
         except:
             rethrow_current_exception_as(KeyError)
-           
+
 
 class Relationships(object):
-    
+
     def __init__(self, db):
         self.db = db
         self.indexes = RelationshipIndexManager(db)
-        
+
     def __getitem__(self, items):
         return self.get(items)
-            
+
     def __delitem__(self, item):
         return self[item].delete()
-        
+
     def __iter__(self):
         for node in self.db.nodes:
             for rel in node.relationships.incoming:
                 yield rel
-            
+
     def __len__(self):
         return sum(1 for _ in self)
-        
-    def get(self, id):
-        if not isinstance(id, (int, long)):
-            raise TypeError("Only integer and long values allowed as relationship ids.")
-            
+
+    def get(self, _id):
+        if not isinstance(_id, (int, long)):
+            raise TypeError("Only integer and long values \
+                    allowed as relationship ids.")
+
         try:
-            return self.db.getRelationshipById( id )
+            return self.db.getRelationshipById(id)
         except:
             rethrow_current_exception_as(KeyError)
 
 
 class GraphDatabase(GraphDatabase):
-    
+
     from core import __new__
-    
+
     try:
         from contextlib import contextmanager
     except:
@@ -130,46 +139,50 @@ class GraphDatabase(GraphDatabase):
             tx.finish()
 ''')
         transaction = property(contextmanager(transaction))
-        del contextmanager # from the body of this class
-    
+        del contextmanager  # from the body of this class
+
     @property
     def node(self):
         if not hasattr(self, '__nodes'):
             self.__nodes = Nodes(self)
         return self.__nodes
-        
+
     # Syntax sugar
     nodes = node
-        
+
     @property
     def relationship(self):
         if not hasattr(self, '__relationships'):
             self.__relationships = Relationships(self)
         return self.__relationships
-        
+
     # Syntax sugar
     relationships = relationship
-        
+
     @property
     def reference_node(self):
         return self.getReferenceNode()
-    
+
     def traversal(self):
         ''' This is deprecated, please use cypher instead.'''
         return Traversal.description()
-        
+
     def query(self, query, **params):
         return self._cypher_engine.execute(query, **params)
-        
+
     def prepare_query(self, query):
         ''' This is deprecated, Cypher internally caches query plans now,
         use queries with parameters to take full advantage of this.
         '''
         return self._cypher_engine.prepare(query)
-        
+
     @property
     def _cypher_engine(self):
         if not hasattr(self, '__cached_cypher_engine'):
+            try:
+                import jpype
+                jpype.attachThreadToJVM()
+            except Exception:
+                pass
             self.__cached_cypher_engine = CypherEngine(self)
         return self.__cached_cypher_engine
-

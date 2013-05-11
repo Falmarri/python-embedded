@@ -29,7 +29,7 @@ DIR=$(cd `dirname $FILE`; pwd)
 FILE=$(basename $FILE)
 if [ "__main__.py" != "$FILE" ]; then
     echo Neo4j library has been obscured >&2
-    exit -1 
+    exit -1
 fi
 while [ -L "$DIR" ]; do
     DIR=$(readlink $DIR)
@@ -74,66 +74,68 @@ if __name__ != '__main__':
         "neo4j.__main__ is not meant to be imported."
         "It is meant to be used as an executable.\n\n" + USAGE)
 else:
-   import sys, os
+    import sys
+    import os
 
-   path = sys.argv[0]
-   if not os.path.isdir(path):
-       path = os.path.dirname(path)
-   if path in sys.path:
-       sys.path.remove(path)
-   path = os.path.dirname(os.path.abspath(path))
-   if path not in sys.path:
-       sys.path.insert(0, path)
+    path = sys.argv[0]
+    if not os.path.isdir(path):
+        path = os.path.dirname(path)
+    if path in sys.path:
+        sys.path.remove(path)
+    path = os.path.dirname(os.path.abspath(path))
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
-   import neo4j
+    import neo4j
 
-   def run(script, env):
-       exec(script, env)
+    def run(script, env):
+        exec(script, env)
 
-   def script(infile):
-       def main(env):
-           run(infile.read(), env)
-       return main
+    def script(infile):
+        def main(env):
+            run(infile.read(), env)
+        return main
 
-   def scripts(paths):
-       for path in paths:
-           if not os.path.isfile(path):
-               raise TypeError("Script <%s> does not exits." % (path,))
-       def main(env):
-           for path in paths:
-               with open(path) as infile:
-                   script(infile)(dict(env))
-       return main
+    def scripts(paths):
+        for path in paths:
+            if not os.path.isfile(path):
+                raise TypeError("Script <%s> does not exits." % (path,))
 
-   def interactive(env):
-       from code import InteractiveConsole
-       InteractiveConsole(locals=env).interact(
-           banner="Neo4j Python bindings interactive console")
+        def main(env):
+            for path in paths:
+                with open(path) as infile:
+                    script(infile)(dict(env))
+        return main
 
-   try:
-       if len(sys.argv) > 2:
-           main = scripts(sys.argv[2:])
-       elif len(sys.argv) < 2:
-           raise TypeError("No database path specified")
-       elif not sys.stdin.isatty():
-           main = script(sys.stdin)
-       else:
-           main = interactive
+    def interactive(env):
+        from code import InteractiveConsole
+        InteractiveConsole(locals=env).interact(
+            banner="Neo4j Python bindings interactive console")
 
-       if os.path.isfile(sys.argv[1]):
-           raise TypeError("Database path is a file")
-       elif not os.path.exists(sys.argv[1]):
-           sys.stderr.write("WARNING: Database path <%s> does not exist, a "
-                            "Neo4j database will be created.\n"%(sys.argv[1],))
-   except:
-       sys.stderr.write(str(sys.exc_info()[1]) + '\n\n')
-       sys.stderr.write(USAGE)
-       sys.exit(-1)
+    try:
+        if len(sys.argv) > 2:
+            main = scripts(sys.argv[2:])
+        elif len(sys.argv) < 2:
+            raise TypeError("No database path specified")
+        elif not sys.stdin.isatty():
+            main = script(sys.stdin)
+        else:
+            main = interactive
 
-   graphdb = neo4j.GraphDatabase(sys.argv[1])
-   try:
-       main({
-           'graphdb': graphdb,
-       })
-   finally:
-       graphdb.shutdown()
+        if os.path.isfile(sys.argv[1]):
+            raise TypeError("Database path is a file")
+        elif not os.path.exists(sys.argv[1]):
+            sys.stderr.write("WARNING: Database path <%s> does not exist, a "
+                             "Neo4j database will be created.\n" % sys.argv[1])
+    except:
+        sys.stderr.write(str(sys.exc_info()[1]) + '\n\n')
+        sys.stderr.write(USAGE)
+        sys.exit(-1)
+
+    graphdb = neo4j.GraphDatabase(sys.argv[1])
+    try:
+        main({
+            'graphdb': graphdb,
+        })
+    finally:
+        graphdb.shutdown()

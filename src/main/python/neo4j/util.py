@@ -23,7 +23,6 @@
 
 
 from sys import exc_info
-import traceback
 
 try:
     from functools import update_wrapper
@@ -32,29 +31,30 @@ except:
     def update_wrapper(wrapper, method):
         return wrapper
 
+
 class PythonicIterator(object):
     def __init__(self, iterator):
         self.__iter = iterator
-        
+
     def __iter__(self):
         return self
-    
+
     def __enter__(self):
         pass
-    
+
     def __exit__(self, _type, value, tb):
         self.close()
 
     def next(self):
         return self.__iter.next()
-        
+
     def close(self):
         self.__iter.close()
-      
+
     def single(self):
         for item in self:
             break
-        else: # empty iterator
+        else:  # empty iterator
             return None
         for item in self:
             raise ValueError("Too many items in the iterator")
@@ -64,16 +64,17 @@ class PythonicIterator(object):
             pass
         return item
     single = property(single)
- 
+
+
 class CountablePythonicIterator(PythonicIterator):
-  
+
     def __len__(self):
-       count = 0
-       for it in self:
-           count += 1
-       return count
-    
-        
+        count = 0
+        for it in self:
+            count += 1
+        return count
+
+
 def rethrow_current_exception_as(ErrorClass):
     # Because exceptions that come out of
     # jython don't subclass exception, but
@@ -81,13 +82,12 @@ def rethrow_current_exception_as(ErrorClass):
     # they behave slightly differently,
     # we use this boilerplate,.
     t, e, trace = exc_info()
-    
-    if isinstance(e,tuple) and len(e) > 1 and isinstance(e[1],Exception):
+
+    if isinstance(e, tuple) and len(e) > 1 and isinstance(e[1], Exception):
         e = e[1]
-    
+
     if hasattr(e, "message"):
         msg = e.message() if hasattr(e.message, '__call__') else e.message
     else:
         msg = str(e)
     raise ErrorClass(msg), None, trace
-        

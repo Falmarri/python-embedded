@@ -17,45 +17,47 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from _backend import extends, Index, IndexHits, to_java
-from neo4j.util import rethrow_current_exception_as, PythonicIterator
+from neo4j.util import PythonicIterator
 
 #
 # Pythonification of the index API
 #
 
+
 class NodeIndexManager(object):
 
     def __init__(self, db):
         self._index = db.index()
-        
+
     def create(self, name, **config):
         return self._index.forNodes(name, to_java(config))
-        
+
     def get(self, name):
         if self.exists(name):
             return self._index.forNodes(name)
         raise ValueError("No node index named %s exists." % name)
-        
+
     def exists(self, name):
         return self._index.existsForNodes(name)
-    
+
+
 class RelationshipIndexManager(object):
 
     def __init__(self, db):
         self._index = db.index()
-        
+
     def create(self, name, **config):
         return self._index.forRelationships(name, to_java(config))
-        
+
     def get(self, name):
         if self.exists(name):
             return self._index.forRelationships(name)
         raise ValueError("No relationship index named %s exists." % name)
-        
+
     def exists(self, name):
         return self._index.existsForRelationships(name)
 
-        
+
 class IndexColumn(object):
 
     def __init__(self, idx, key):
@@ -67,24 +69,25 @@ class IndexColumn(object):
 
     def __getitem__(self, value):
         return IndexCell(self._idx, self.key, value)
-        
+
     def __delitem__(self, item):
         self._idx.remove(item, self.key)
-        
+
+
 class IndexCell(object):
     ''' This class supports the
     del idx['key']['value'][item]
     semantics.
-    
+
     For everything else, it delegates
     to IndexHits, with some wrapping
     code.
-    
+
     The reason is that we don't want to
     bother executing an unnecessary index
     search when we do deletes.
     '''
-  
+
     def __init__(self, idx, key, value):
         self._idx = idx
         self.key = key
@@ -98,23 +101,23 @@ class IndexCell(object):
 
     def __getitem__(self, item):
         return self._get_hits().__getitem__(item)
-        
+
     def __delitem__(self, item):
         self._idx.remove(item, self.key, self.value)
-        
+
     @property
     def single(self):
         return self.__iter__().single
-        
+
     def close(self):
         if hasattr(self, '_cached_hits'):
             self._cached_hits.close()
             del self._cached_hits
-        
+
     def _get_hits(self, close=True):
         if close:
             self.close()
-        
+
         if not hasattr(self, '_cached_hits'):
             self._cached_hits = self._idx.get(self.key, self.value)
         return self._cached_hits
@@ -138,9 +141,7 @@ class IndexHits(extends(IndexHits)):
 class Index(extends(Index)):
 
     def __getitem__(self, key):
-        return IndexColumn(self,key)
-        
+        return IndexColumn(self, key)
+
     def __delitem__(self, item):
         self.remove(item)
-        
-    
