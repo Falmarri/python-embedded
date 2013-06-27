@@ -70,11 +70,11 @@ class Schema(extends(Schema)):
         r = []
         for p in properties:
             try:
-                r.append(self.indexCreator(_DynamicLabel(label))
+                r.append(self.indexFor(_DynamicLabel(label))
                              .on(p)
                              .create())
             except Exception as e:
-                print "Exception creating index %s:%s" % label, p
+                print "Exception creating index %s:%s" % (label, p)
                 print e
         return r
 
@@ -158,7 +158,7 @@ class PropertyContainer(extends(PropertyContainer)):
         if v is not None:
             return v
 
-        raise KeyError("No property with key #{key}.")
+        raise KeyError("No property with key %s.", key)
 
     def __setitem__(self, key, value):
         self.set_property(key, value)
