@@ -41,6 +41,7 @@ NEO4J_JAVA_CLASSES = (
                                          'GraphDatabaseService', 'Direction',
                                          'Relationship', 'Path',
                                          'NotFoundException', 'DynamicLabel')),
+    ('org.neo4j.graphdb.factory',       ('GraphDatabaseFactory',)),
     ('org.neo4j.graphdb.schema',        ('Schema', 'IndexDefinition')),
     ('org.neo4j.graphdb.traversal',     ('Evaluation', 'Evaluator',)),
     ('org.neo4j.graphdb.index',         ('Index', 'IndexHits',)),
@@ -50,6 +51,7 @@ NEO4J_JAVA_CLASSES = (
     ('java.util',                       ('HashMap',)),
     ('java.util.concurrent',            ('TimeUnit',)),
 )
+    
 
 module = sys.modules[__name__]
 
@@ -294,8 +296,6 @@ except:   # this isn't jython (and doesn't have the java module)
                 return jpype.JProxy((interface,), inst=inst)
         return InterfaceProxy
 
-    def create_embedded_db(*args):
-        return EmbeddedGraphDatabase(*args)
 
 else:
     # Import java classes
