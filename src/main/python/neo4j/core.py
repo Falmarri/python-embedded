@@ -39,8 +39,18 @@ def __new__(GraphDatabase, resourceUri, **settings):
             config.put(key, value)
     jpype.java.lang.System.setProperty("neo4j.ext.udc.source", "neo4py")
 
-    return EmbeddedGraphDatabase(resourceUri, config)
+    return GraphDatabaseFactory().newEmbeddedDatabaseBuilder( resourceUri ).setConfig(config).newGraphDatabase()
 
+
+def __hanew__(GraphDatabase, resourceUri, props):
+    #config = HashMap()
+    #for key in settings:
+        #value = settings[key]
+        #if isinstance(value, str):
+            #config.put(key, value)
+    jpype.java.lang.System.setProperty("neo4j.ext.udc.source", "neo4py")
+    
+    return HighlyAvailableGraphDatabaseFactory().newHighlyAvailableDatabaseBuilder( resourceUri ).loadPropertiesFromFile(props).newGraphDatabase()
 
 class _Direction(extends(Direction)):
 
@@ -116,7 +126,7 @@ class NodeProxy(extends(NodeProxy)):
 
     @property
     def labels(self):
-        return [_.name() for _ in self.getLabels().iterator()]
+        return set(_.name() for _ in self.getLabels().iterator())
 
     def has_label(self, label):
         return self.hasLabel(_DynamicLabel(label))

@@ -79,6 +79,7 @@ class GraphTest(unit_tests.GraphDatabaseTest):
         # block.
         # END SNIPPET: withBasedTransactions
         self.assertNotEqual(node, None)
+        self.assertEqual(node['name'], 'Cat Stevens')
         
     def test_create_node(self):
         with self.graphdb.transaction:
@@ -126,6 +127,37 @@ class GraphTest(unit_tests.GraphDatabaseTest):
         self.assertNotEqual(thomas, None)
         self.assertEquals(thomas['name'], 'Thomas Anderson')
         self.assertEquals(thomas['age'], 42)
+        
+        
+    def test_create_node_with_label(self):
+        db = self.graphdb
+        with db.transaction:
+            node = db.node('Label')
+            
+        self.assertEqual(node.labels, set(['Label']))
+        
+    def test_add_label(self):
+        db = self.graphdb
+        with db.transaction:
+            node = db.node()
+            
+        self.assertEqual(node.labels, set())
+        
+        with db.transaction:
+            node.add_label('Label')
+        
+        self.assertEqual(node.labels, set(['Label']))
+        
+    def test_delete_label(self):
+        db = self.graphdb
+        with db.transaction:
+            node = db.node('Label')
+            
+        with db.transaction:
+            node.remove_label('Label')
+            
+        self.assertEqual(node.labels, set())
+        
         
     def test_properties(self):
         db = self.graphdb

@@ -52,6 +52,10 @@ NEO4J_JAVA_CLASSES = (
     ('java.util.concurrent',            ('TimeUnit',)),
 )
     
+NEO4J_HA_JAVA_CLASSES = (
+    ('org.neo4j.kernel.ha',             ('HighlyAvailableGraphDatabase',)),
+    ('org.neo4j.graphdb.factory',       ('HighlyAvailableGraphDatabaseFactory',))
+    )
 
 module = sys.modules[__name__]
 
@@ -231,6 +235,16 @@ except:   # this isn't jython (and doesn't have the java module)
             cls = getattr(package, class_name)
             _add_jvm_connection_boilerplate_to_class(cls)
             globals()[class_name] = cls
+            
+    try:
+        for pkg_name, class_names in NEO4J_HA_JAVA_CLASSES:
+            package = jpype.JPackage(pkg_name)
+            for class_name in class_names:
+                cls = getattr(package, class_name)
+                _add_jvm_connection_boilerplate_to_class(cls)
+                globals()[class_name] = cls
+    except Exception:
+        pass
 
     # If JPype cannot find a class, it returns
     # package instances. Make sure we were able to load
