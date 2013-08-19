@@ -118,15 +118,11 @@ class GraphDatabase(GraphDatabase):
 
     from core import __new__
 
-    try:
-        from contextlib import contextmanager
-    except:
-        pass
-    else:
-        ## yield in try is a recent feature in Python,
-        ## guard with exec to support old versions of Python
-        ## This should pass since import contextlib has worked
-        exec('''def transaction(self):
+    from contextlib import contextmanager
+
+    @property
+    @contextmanager
+    def transaction(self):
         """Allows usage of the with-statement for Neo4j transactions:
         with graphdb.transaction:
             doMutatingOperations()
@@ -137,9 +133,9 @@ class GraphDatabase(GraphDatabase):
             tx.success()
         finally:
             tx.finish()
-''')
-        transaction = property(contextmanager(transaction))
-        del contextmanager  # from the body of this class
+
+    transaction = property(contextmanager(transaction))
+    del contextmanager  # from the body of this class
 
     @property
     def node(self):
