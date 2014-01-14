@@ -1,5 +1,6 @@
 # -*- mode: Python; coding: utf-8 -*-
 
+
 # Copyright (c) 2002-2013 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
@@ -22,7 +23,7 @@
 
 import sys
 import inspect
-
+import functools
 NEO4J_JAVA_CLASSES = (
     ('org.neo4j.kernel.impl.core',      ('NodeProxy', 'RelationshipProxy',)),
     ('org.neo4j.kernel',                ('Uniqueness', 'Traversal',
@@ -210,6 +211,7 @@ except:   # this isn't jython (and doesn't have the java module)
         not the case.
         '''
         def add_jvm_connection_boilerplate(fn):
+            @functools.wraps(fn)
             def decorator(*args, **kwargs):
                 if not jpype.isThreadAttachedToJVM():
                     jpype.attachThreadToJVM()
@@ -278,7 +280,7 @@ except:   # this isn't jython (and doesn't have the java module)
             if isinstance(value, integers):
                 return value.longValue()
             if isinstance(value, java.Boolean):
-                return True if value is True else False
+                return True if value else False
             if isinstance(value, jpype._jarray._JavaArrayClass):
                 return list(value)
             return value

@@ -39,7 +39,11 @@ def __new__(GraphDatabase, resourceUri, **settings):
             config.put(key, value)
     jpype.java.lang.System.setProperty("neo4j.ext.udc.source", "neo4py")
 
-    return GraphDatabaseFactory().newEmbeddedDatabaseBuilder( resourceUri ).setConfig(config).newGraphDatabase()
+    return (
+        GraphDatabaseFactory()
+        .newEmbeddedDatabaseBuilder(resourceUri)
+        .setConfig(config)
+        .newGraphDatabase())
 
 
 def __hanew__(GraphDatabase, resourceUri, props):
@@ -49,8 +53,13 @@ def __hanew__(GraphDatabase, resourceUri, props):
         #if isinstance(value, str):
             #config.put(key, value)
     jpype.java.lang.System.setProperty("neo4j.ext.udc.source", "neo4py")
-    
-    return HighlyAvailableGraphDatabaseFactory().newHighlyAvailableDatabaseBuilder( resourceUri ).loadPropertiesFromFile(props).newGraphDatabase()
+
+    return (
+        HighlyAvailableGraphDatabaseFactory()
+        .newHighlyAvailableDatabaseBuilder(resourceUri)
+        .loadPropertiesFromFile(props)
+        .newGraphDatabase())
+
 
 class _Direction(extends(Direction)):
 
@@ -76,17 +85,31 @@ class Schema(extends(Schema)):
         else:
             return PythonicIterator(self.getIndexes().iterator())
 
-    def create_index(self, label, *properties):
-        r = []
-        for p in properties:
-            try:
-                r.append(self.indexFor(_DynamicLabel(label))
-                             .on(p)
-                             .create())
-            except Exception as e:
-                print "Exception creating index %s:%s" % (label, p)
-                print e
+    def get_constraints(self, label=None):
+        if label:
+            return PythonicIterator(self.getConstraints(
+                _DynamicLabel(label)).iterator())
+        else:
+            return PythonicIterator(self.getConstraints().iterator())
+
+    def create_index(self, label, prop, unique=False):
+        try:
+            if not unique:
+                r = (self.indexFor(_DynamicLabel(label))
+                         .on(prop)
+                         .create())
+            else:
+                r = (self.constraintFor(_DynamicLabel(label))
+                         .on(prop)
+                         .unique()
+                         .create())
+        except Exception as e:
+            print "Exception creating index %s:%s" % (label, prop)
+            print e
         return r
+
+    def wait_for_indexes(self, t):
+        self.awaitIndexesOnline(t, TimeUnit.SECONDS)
 
     def wait_for_index(self, idx, t):
         self.awaitIndexOnline(idx, t, TimeUnit.SECONDS)
