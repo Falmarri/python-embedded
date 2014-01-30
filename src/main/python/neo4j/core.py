@@ -92,17 +92,18 @@ class Schema(extends(Schema)):
         else:
             return PythonicIterator(self.getConstraints().iterator())
 
-    def create_index(self, label, prop, unique=False):
+    def create_constraint(self, label, prop):
+        r = (self.constraintFor(_DynamicLabel(label))
+                 .assertPropertyIsUnique(prop)
+                 .create())
+        return r
+
+    def create_index(self, label, prop):
+        r = None
         try:
-            if not unique:
-                r = (self.indexFor(_DynamicLabel(label))
-                         .on(prop)
-                         .create())
-            else:
-                r = (self.constraintFor(_DynamicLabel(label))
-                         .on(prop)
-                         .unique()
-                         .create())
+            r = (self.indexFor(_DynamicLabel(label))
+                 .on(prop)
+                 .create())
         except Exception as e:
             print "Exception creating index %s:%s" % (label, prop)
             print e
@@ -238,6 +239,7 @@ class PropertyContainer(extends(PropertyContainer)):
         return self.hasProperty(key)
 
     def to_dict(self):
+        return ProxyContainerHelper.toDict(self)
         out = {}
         for k, v in self.items():
             out[k] = v
@@ -247,18 +249,21 @@ class PropertyContainer(extends(PropertyContainer)):
         return ''.join([self.__str__(), dumps(self.to_dict())])
 
 
-class Transaction(extends(Transaction)):
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc, *stuff):
-        try:
-            if exc:
-                self.failure()
-            else:
-                self.success()
-        finally:
-            self.finish()
+#class Transaction(extends(Transaction)):
+#    def __enter__(self):
+#        print 'Begging trans'
+#        return self
+#
+#    def __exit__(self, exc, *stuff):
+#        print 'Exit trans'
+#        try:
+##            if exc:
+#                self.failure()
+##                raise Exception()
+#            else:
+#                self.success()
+#        finally:
+#            self.finish()
 
 
 class NodeRelationships(object):

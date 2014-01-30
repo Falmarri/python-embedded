@@ -30,12 +30,12 @@ NEO4J_JAVA_CLASSES = (
                                          'EmbeddedGraphDatabase',
                                          'BidirectionalTraversalBranchPath',
                                          'ExtendedPath',)),
-    ('org.neo4j.kernel.impl.traversal', ('TraversalDescriptionImpl',
-                                         'TraverserImpl',
-                                         'TraversalBranchImpl',
-                                         'FinalTraversalBranch',
-                                         'AsOneStartBranch',
-                                         'StartNodeTraversalBranch',)),
+#    ('org.neo4j.kernel.impl.traversal', ('TraversalDescriptionImpl',
+#                                         'TraverserImpl',
+#                                         'TraversalBranchImpl',
+#                                         'FinalTraversalBranch',
+#                                         'AsOneStartBranch',
+#                                         'StartNodeTraversalBranch',)),
     ('org.neo4j.kernel.impl.util',      ('SingleNodePath',)),
     ('org.neo4j.graphdb',               ('Node', 'DynamicRelationshipType',
                                          'PropertyContainer', 'Transaction',
@@ -48,6 +48,7 @@ NEO4J_JAVA_CLASSES = (
     ('org.neo4j.graphdb.index',         ('Index', 'IndexHits',)),
     ('org.neo4j.helpers.collection',    ('IterableWrapper',)),
     ('org.neo4j.cypher.pycompat',       ('ExecutionEngine', 'WrappedPath')),
+    ('org.neo4j.kernel.pycompat',       ('ProxyContainerHelper',)),
     ('org.neo4j.tooling',               ('GlobalGraphOperations',)),
     ('java.util',                       ('HashMap',)),
     ('java.util.concurrent',            ('TimeUnit',)),
@@ -211,7 +212,6 @@ except:   # this isn't jython (and doesn't have the java module)
         not the case.
         '''
         def add_jvm_connection_boilerplate(fn):
-            @functools.wraps(fn)
             def decorator(*args, **kwargs):
                 if not jpype.isThreadAttachedToJVM():
                     jpype.attachThreadToJVM()
@@ -280,7 +280,7 @@ except:   # this isn't jython (and doesn't have the java module)
             if isinstance(value, integers):
                 return value.longValue()
             if isinstance(value, java.Boolean):
-                return True if value else False
+                return True if value == True else False
             if isinstance(value, jpype._jarray._JavaArrayClass):
                 return list(value)
             return value
