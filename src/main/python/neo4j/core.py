@@ -239,7 +239,6 @@ class PropertyContainer(extends(PropertyContainer)):
         return self.hasProperty(key)
 
     def to_dict(self):
-        return ProxyContainerHelper.toDict(self)
         out = {}
         for k, v in self.items():
             out[k] = v
